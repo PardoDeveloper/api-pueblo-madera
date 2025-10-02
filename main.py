@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from session import create_database, get_session
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
+from api.v1.routes import auth
+from create_admin import create_admin
 
 @asynccontextmanager
 async def lifespan_manager(app: FastAPI):
@@ -10,6 +12,7 @@ async def lifespan_manager(app: FastAPI):
     """
     print("Iniciando la aplicación...")
     create_database()
+    create_admin()
     yield
     print("Cerrando la aplicación...")
 
@@ -27,6 +30,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(auth.router)
 
 @app.get("/")
 def read_root():

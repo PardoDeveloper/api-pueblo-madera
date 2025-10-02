@@ -11,5 +11,8 @@ poetry install
 ## AÑADIR DEPENDENCIAS
 poetry add <dependencia>
 
+## REMOVER DEPENDENCIAS
+poetry remove <dependencia>
+
 ## ARRANCAR PROYECTO
 uvicorn main:app --reload
