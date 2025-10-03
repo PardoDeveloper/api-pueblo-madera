@@ -1,6 +1,7 @@
 # schemas/cliente.py
 from sqlmodel import SQLModel
 from typing import Optional
+from pydantic import ConfigDict
 
 class ClienteBase(SQLModel):
     nombre: str
@@ -20,5 +21,4 @@ class ClienteUpdate(SQLModel):
 class ClienteRead(ClienteBase):
     id: int
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

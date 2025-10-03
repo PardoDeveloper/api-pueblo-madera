@@ -2,6 +2,7 @@
 from sqlmodel import SQLModel
 from typing import Optional
 from datetime import datetime
+from pydantic import ConfigDict
 
 class MuebleBase(SQLModel):
     nombre: str
@@ -26,5 +27,4 @@ class MuebleRead(MuebleBase):
     id: int
     proyecto_id: int
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

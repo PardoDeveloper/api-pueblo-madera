@@ -2,6 +2,7 @@
 from sqlmodel import SQLModel
 from typing import Optional
 from datetime import datetime
+from pydantic import ConfigDict
 
 class TareaBase(SQLModel):
     tipo: str
@@ -26,5 +27,4 @@ class TareaRead(TareaBase):
     mueble_id: int
     maestro_id: int
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

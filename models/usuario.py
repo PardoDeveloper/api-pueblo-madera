@@ -1,8 +1,8 @@
-from typing import Optional, List
+from typing import Optional, List, TYPE_CHECKING
 from sqlmodel import SQLModel, Field, Relationship
 
-
-from models.proyecto import Proyecto 
+if TYPE_CHECKING:
+    from models.proyecto import Proyecto
 
 class Rol(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -13,21 +13,26 @@ class Rol(SQLModel, table=True):
 
 class Usuario(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
+    username: str
+    email: Optional[str]
+    hashed_password: str
     nombre: str
-    username: str = Field(unique=True, index=True)
-    email: Optional[str] = Field(unique=True)
-    password_hash: str
     activo: bool = True
     rol_id: Optional[int] = Field(default=None, foreign_key="rol.id")
+    rol: Optional[Rol] = Relationship(back_populates="usuarios")
 
-    rol: Optional["Rol"] = Relationship(back_populates="usuarios")
+    proyectos_vendidos: List["Proyecto"] = Relationship(
+        back_populates="vendedor",
+        sa_relationship_kwargs={"foreign_keys": "Proyecto.vendedor_id"}
+    )
 
-    # Relaciones con Proyecto
-    proyectos_vendidos: List[Proyecto] = Relationship(
-        back_populates="vendedor", 
-        sa_relationship_kwargs={"primaryjoin": "Usuario.id == Proyecto.vendedor_id"}
+    proyectos_jefe: List["Proyecto"] = Relationship(
+        back_populates="jefe_proyecto",
+        sa_relationship_kwargs={"foreign_keys": "Proyecto.jefe_proyecto_id"}
     )
-    proyectos_disenados: List[Proyecto] = Relationship(
-        back_populates="arquitecto", 
-        sa_relationship_kwargs={"primaryjoin": "Usuario.id == Proyecto.arquitecto_id"}
-    )
+
+
+
+  
+
+    

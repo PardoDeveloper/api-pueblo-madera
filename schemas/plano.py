@@ -2,6 +2,7 @@
 from sqlmodel import SQLModel
 from typing import Optional
 from datetime import datetime
+from pydantic import ConfigDict
 
 class PlanoBase(SQLModel):
     archivo_pdf: str
@@ -21,5 +22,4 @@ class PlanoRead(PlanoBase):
     arquitecto_id: int
     fecha_subida: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

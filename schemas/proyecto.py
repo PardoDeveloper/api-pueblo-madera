@@ -2,6 +2,7 @@
 from sqlmodel import SQLModel
 from typing import Optional
 from datetime import datetime
+from pydantic import ConfigDict
 
 class ProyectoBase(SQLModel):
     estado: str
@@ -29,5 +30,4 @@ class ProyectoRead(ProyectoBase):
     fecha_inicio: datetime
     fecha_fin_real: Optional[datetime]
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

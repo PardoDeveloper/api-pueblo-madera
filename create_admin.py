@@ -1,6 +1,6 @@
 from sqlmodel import Session, select
 from session import engine
-from models.usuario import Usuario
+from models.usuario import Usuario, Rol
 from core.security import hash_password
 from core.loggin import logger
 
@@ -24,21 +24,30 @@ def create_admin():
                 logger.info("USUARIO ADMINISTRADOR EXISTENTE!")
                 return
 
+            # Asegurar que exista el rol 'admin'
+            role_stmt = select(Rol).where(Rol.nombre == "admin")
+            admin_role = session.exec(role_stmt).first()
+            if not admin_role:
+                admin_role = Rol(nombre="admin")
+                session.add(admin_role)
+                session.commit()
+                session.refresh(admin_role)
+
             # Crear usuario admin con password truncado
             password = truncate_password("Admin123")
             admin_user = Usuario(
                 nombre="Administrador",
                 username="admin",
-                password_hash=hash_password(password),
+                hashed_password=hash_password(password), 
                 email="admin@example.com",
                 activo=True,
-                rol_id=None
+                rol_id=admin_role.id
             )
             session.add(admin_user)
             session.commit()
             logger.info("USUARIO ADMINISTRADOR CREADO CON EXITO!")
     except Exception as e:
-        logger.error("ERROR AL CREAR USUARIO ADMINISTRADOR: ", e)
+        logger.error(f"ERROR AL CREAR USUARIO ADMINISTRADOR: {e}")
 
 
 if __name__ == "__main__":

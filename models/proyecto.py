@@ -3,6 +3,7 @@ from sqlmodel import SQLModel, Field, Relationship
 from datetime import datetime
 
 if TYPE_CHECKING:
+    from models.usuario import Usuario
     from models.cliente import Cliente
     from models.mueble import Mueble
 
@@ -12,7 +13,7 @@ class Proyecto(SQLModel, table=True):
     vendedor_id: int = Field(foreign_key="usuario.id")
     jefe_proyecto_id: int = Field(foreign_key="usuario.id")
 
-    estado: str  # cotizacion, produccion, instalacion, cerrado
+    estado: str
     fecha_inicio: datetime = Field(default_factory=datetime.utcnow)
     fecha_fin_estimada: Optional[datetime] = None
     fecha_fin_real: Optional[datetime] = None
@@ -22,3 +23,13 @@ class Proyecto(SQLModel, table=True):
 
     cliente: "Cliente" = Relationship(back_populates="proyectos")
     muebles: List["Mueble"] = Relationship(back_populates="proyecto")
+
+    # Relaciones a Usuario usando SQLModel Relationship
+    vendedor: "Usuario" = Relationship(
+        back_populates="proyectos_vendidos",
+        sa_relationship_kwargs={"foreign_keys": "Proyecto.vendedor_id"}
+    )
+    jefe_proyecto: "Usuario" = Relationship(
+        back_populates="proyectos_jefe",
+        sa_relationship_kwargs={"foreign_keys": "Proyecto.jefe_proyecto_id"}
+    )

@@ -35,13 +35,9 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
-<<<<<<< HEAD
 app.include_router(clientes.router)
-=======
-app.include_router(auth.router, prefix="/api/v1") # Recomendación: Añadir prefix para consistencia
-# AÑADIR: Inclusión del router de proyectos
-app.include_router(proyectos.router, prefix="/api/v1")
->>>>>>> bfb007c8352752c27eee6438cae3a0d96f19cbd0
+
+
 
 @app.get("/")
 def read_root():
