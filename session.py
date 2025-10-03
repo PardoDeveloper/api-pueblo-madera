@@ -1,5 +1,5 @@
 from sqlmodel import create_engine, Session, SQLModel
-
+from core.loggin import logger
 # Define el nombre del archivo de la base de datos
 sqlite_file_name = "database.db"
 
@@ -8,13 +8,8 @@ sqlite_url = f"sqlite:///{sqlite_file_name}"
 
 # Crea el motor de la base de datos
 # `echo=True` es útil para ver las sentencias SQL que se ejecutan, desactívalo en producción
-engine = create_engine(sqlite_url, echo=True, connect_args={"timeout": 30})
+engine = create_engine(sqlite_url, echo=False, connect_args={"timeout": 30})
 
-def create_database():
-    """
-    Crea la base de datos y las tablas a partir de los modelos de SQLModel.
-    """
-    SQLModel.metadata.create_all(engine)
 
 def get_session():
     with Session(engine) as session:

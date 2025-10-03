@@ -1,20 +1,23 @@
 from fastapi import FastAPI
-from session import create_database, get_session
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
-from api.v1.routes import auth
+from api.v1.routes import auth, clientes
 from create_admin import create_admin
+from core.loggin import logger
+import models
+from sqlmodel import SQLModel
+from session import engine
 
 @asynccontextmanager
 async def lifespan_manager(app: FastAPI):
     """
     Función que maneja los eventos de inicio y apagado de la aplicación.
     """
-    print("Iniciando la aplicación...")
-    create_database()
+    logger.info("INICIANDO SERVIDOR...")
+    SQLModel.metadata.create_all(engine)
     create_admin()
     yield
-    print("Cerrando la aplicación...")
+    logger.info("APAGANDO SERVIDOR...")
 
 app = FastAPI(
     title="API PUEBLO MADERA",
@@ -32,6 +35,7 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
+app.include_router(clientes.router)
 
 @app.get("/")
 def read_root():

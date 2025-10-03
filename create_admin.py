@@ -2,6 +2,7 @@ from sqlmodel import Session, select
 from session import engine
 from models.usuario import Usuario
 from core.security import hash_password
+from core.loggin import logger
 
 MAX_BCRYPT_BYTES = 72  # bcrypt solo soporta hasta 72 bytes
 
@@ -20,7 +21,7 @@ def create_admin():
             statement = select(Usuario).where(Usuario.username == "admin")
             admin = session.exec(statement).first()
             if admin:
-                print("Usuario administrador ya existe.")
+                logger.info("USUARIO ADMINISTRADOR EXISTENTE!")
                 return
 
             # Crear usuario admin con password truncado
@@ -35,10 +36,9 @@ def create_admin():
             )
             session.add(admin_user)
             session.commit()
-            print("Usuario administrador creado con username 'admin' y password 'Admin123'")
-
+            logger.info("USUARIO ADMINISTRADOR CREADO CON EXITO!")
     except Exception as e:
-        print("Error al crear el administrador:", e)
+        logger.error("ERROR AL CREAR USUARIO ADMINISTRADOR: ", e)
 
 
 if __name__ == "__main__":

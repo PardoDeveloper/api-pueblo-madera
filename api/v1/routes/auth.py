@@ -18,13 +18,14 @@ def register(user: UserCreate, db: Session = Depends(get_session)):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 @router.post("/login")
-def login(username: str, password: str, session: Session = Depends(get_session)):
-    statement = select(Usuario).where(Usuario.username == username)
+def login(data: UserLogin, session: Session = Depends(get_session)):
+    statement = select(Usuario).where(Usuario.username == data.username)
     user = session.exec(statement).first()
-    if not user or not verify_password(password, user.password_hash):
+
+    if not user or not verify_password(data.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrecta")
 
-    token = create_access_token({"sub": user.username})  # solo username en el token
+    token = create_access_token({"sub": user.username})
 
     return {
         "access_token": token,
