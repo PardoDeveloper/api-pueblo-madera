@@ -4,6 +4,8 @@ from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from api.v1.routes import auth
 from create_admin import create_admin
+from api.v1.routes import proyectos 
+
 
 @asynccontextmanager
 async def lifespan_manager(app: FastAPI):
@@ -32,6 +34,9 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
+app.include_router(auth.router, prefix="/api/v1") # Recomendación: Añadir prefix para consistencia
+# AÑADIR: Inclusión del router de proyectos
+app.include_router(proyectos.router, prefix="/api/v1")
 
 @app.get("/")
 def read_root():

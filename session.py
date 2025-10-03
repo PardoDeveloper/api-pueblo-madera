@@ -1,4 +1,5 @@
 from sqlmodel import create_engine, Session, SQLModel
+from contextlib import contextmanager
 
 # Define el nombre del archivo de la base de datos
 sqlite_file_name = "database.db"
@@ -11,10 +12,13 @@ sqlite_url = f"sqlite:///{sqlite_file_name}"
 engine = create_engine(sqlite_url, echo=True, connect_args={"timeout": 30})
 
 def create_database():
-    """
-    Crea la base de datos y las tablas a partir de los modelos de SQLModel.
-    """
+    from models.usuario import Usuario, Rol
+    from models.cliente import Cliente
+    from models.proyecto import Proyecto, Mueble
+    
+    print("Creando tablas de la base de datos...")
     SQLModel.metadata.create_all(engine)
+    print("Tablas creadas con éxito.")
 
 def get_session():
     with Session(engine) as session:
