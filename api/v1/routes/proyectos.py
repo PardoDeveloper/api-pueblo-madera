@@ -7,8 +7,9 @@ from session import get_session # Usando tu módulo 'session'
 from repositories.proyecto_repository import ProyectoRepository
 from schemas.proyecto import (
     ProyectoCreate, ProyectoRead, ProyectoUpdateEstado, 
-    ProyectoUpdateArquitecto, MuebleCreate, MuebleRead
+    ProyectoUpdateArquitecto
 )
+from schemas.mueble import MuebleCreate, MuebleRead
 
 # Importamos la dependencia de seguridad y el modelo de usuario (ajustar la importación según tu estructura)
 from core.security import get_current_user 

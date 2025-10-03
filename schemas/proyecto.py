@@ -15,6 +15,14 @@ class ProyectoCreate(ProyectoBase):
     vendedor_id: int
     jefe_proyecto_id: int
 
+
+class ProyectoUpdateEstado(SQLModel):
+    estado: str
+
+
+class ProyectoUpdateArquitecto(SQLModel):
+    arquitecto_id: int
+
 class ProyectoUpdate(SQLModel):
     estado: Optional[str] = None
     fecha_fin_estimada: Optional[datetime] = None

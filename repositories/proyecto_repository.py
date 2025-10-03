@@ -4,8 +4,10 @@ from datetime import datetime
 
 # Importamos los modelos y esquemas
 from models.cliente import Cliente
-from models.proyecto import Proyecto, Mueble
-from schemas.proyecto import ProyectoCreate, ProyectoUpdateEstado, ProyectoUpdateArquitecto, MuebleCreate
+from models.proyecto import Proyecto
+from models.mueble import Mueble
+from schemas.proyecto import ProyectoCreate, ProyectoUpdateEstado, ProyectoUpdateArquitecto
+from schemas.mueble import MuebleCreate
 
 class ProyectoRepository:
     """

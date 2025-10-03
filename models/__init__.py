@@ -4,6 +4,13 @@ from models.mueble import Mueble
 from models.plano import Plano
 from models.tarea import Tarea
 from models.usuario import Usuario, Rol
+from models.material import Material
+from models.producto import Producto
+from models.movimiento_inventario import MovimientoInventario
+from models.solicitud_material import SolicitudMaterial
+from models.supervision import Supervision
+from models.evento_calendario import EventoCalendario
+from models.factura import Factura, DetalleFactura
 
 __all__ = [
     "Cliente",
@@ -13,4 +20,12 @@ __all__ = [
     "Tarea",
     "Usuario",
     "Rol",
+    "Material",
+    "Producto",
+    "MovimientoInventario",
+    "SolicitudMaterial",
+    "Supervision",
+    "EventoCalendario",
+    "Factura",
+    "DetalleFactura",
 ]
