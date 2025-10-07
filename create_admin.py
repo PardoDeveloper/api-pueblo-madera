@@ -25,16 +25,16 @@ def create_admin():
                 return
 
             # Asegurar que exista el rol 'admin'
-            role_stmt = select(Rol).where(Rol.nombre == "admin")
+            role_stmt = select(Rol).where(Rol.nombre == "administrador")
             admin_role = session.exec(role_stmt).first()
             if not admin_role:
-                admin_role = Rol(nombre="admin")
+                admin_role = Rol(nombre="administrador")
                 session.add(admin_role)
                 session.commit()
                 session.refresh(admin_role)
 
             # Crear usuario admin con password truncado
-            password = truncate_password("Admin123")
+            password = truncate_password("admin123")
             admin_user = Usuario(
                 nombre="Administrador",
                 username="admin",

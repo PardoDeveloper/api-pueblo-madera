@@ -22,7 +22,7 @@ def login(data: UserLogin, session: Session = Depends(get_session)):
     statement = select(Usuario).where(Usuario.username == data.username)
     user = session.exec(statement).first()
 
-    if not user or not verify_password(data.password, user.password_hash):
+    if not user or not verify_password(data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrecta")
 
     token = create_access_token({"sub": user.username})
