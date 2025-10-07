@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel, ConfigDict
 
 
@@ -55,3 +55,17 @@ class UsuarioUpdate(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class UsuarioImportado(BaseModel):
+    id: int
+    username: str
+    email: Optional[str]
+    nombre: str
+    activo: bool
+    rol_id: Optional[int]
+
+    class Config:
+        orm_mode = True
+
+class ImportExcelResponse(BaseModel):
+    creados: List[UsuarioImportado]
+    saltados: List[dict]  # lista de dict con nombre, email y motivo
