@@ -34,6 +34,13 @@ class UsuarioCreate(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class RolRead(BaseModel):
+    id: int
+    nombre: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 
 class UsuarioRead(BaseModel):
     id: int
@@ -42,6 +49,7 @@ class UsuarioRead(BaseModel):
     nombre: Optional[str] = None
     activo: bool
     rol_id: Optional[int] = None
+    rol: Optional[RolRead] = None
 
     model_config = ConfigDict(from_attributes=True)
 

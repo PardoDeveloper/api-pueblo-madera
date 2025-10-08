@@ -21,7 +21,7 @@ def normalize_string(s: str) -> str:
 class UsuarioRepository:
     @staticmethod
     def get_all(session: Session) -> List[Usuario]:
-        statement = select(Usuario).distinct().options(selectinload(Usuario.rol))
+        statement = select(Usuario).options(selectinload(Usuario.rol))
         return session.exec(statement).all()
 
     @staticmethod
