@@ -16,7 +16,7 @@ def create_vendedor_user():
         with Session(engine) as session:
             # 1. Buscar o Crear el Rol 'Vendedor'
             # 🚨 El nombre del rol debe ser EXACTO al que tu @Depends espera (e.g., "Vendedor" vs "vendedor")
-            role_name = "Vendedor" 
+            role_name = "vendedor" 
             role_stmt = select(Rol).where(Rol.nombre == role_name)
             vendedor_role = session.exec(role_stmt).first()
             

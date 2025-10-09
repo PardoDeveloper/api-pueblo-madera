@@ -7,6 +7,7 @@ class ClienteBase(SQLModel):
     nombre: str
     correo: str
     telefono: Optional[str] = None
+    comuna: Optional[str] = None
     direccion: Optional[str] = None
     apellido_paterno: Optional[str] = None
     apellido_materno: Optional[str] = None

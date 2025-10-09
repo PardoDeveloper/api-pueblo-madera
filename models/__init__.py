@@ -11,6 +11,7 @@ from models.solicitud_material import SolicitudMaterial
 from models.supervision import Supervision
 from models.evento_calendario import EventoCalendario
 from models.factura import Factura, DetalleFactura
+from models.pago import Pago
 
 __all__ = [
     "Cliente",
@@ -28,4 +29,5 @@ __all__ = [
     "EventoCalendario",
     "Factura",
     "DetalleFactura",
+    "Pago",
 ]

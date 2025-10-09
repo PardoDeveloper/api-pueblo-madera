@@ -30,7 +30,7 @@ def get_vendedor_o_admin(current_user: Usuario = Depends(get_current_user)):
     # Si el rol es una relación, asegúrate de que se cargue
     rol_nombre = current_user.rol.nombre if current_user.rol else None
     
-    if rol_nombre not in ["Vendedor", "Administrador"]:
+    if rol_nombre not in ["Vendedor", "Administrador", "vendedor", "administrador"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permiso para realizar esta acción. Requerido: Vendedor o Administrador."

@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from api.v1.routes import auth, clientes
 from api.v1.routes import proyectos, muebles, planos, tareas
-from api.v1.routes import materiales, productos, movimientos, solicitudes, supervisiones, eventos, facturas, usuarios
+from api.v1.routes import materiales, productos, movimientos, solicitudes, supervisiones, eventos, facturas, usuarios, pagos
 from create_admin import create_admin
 from core.loggin import logger
 import models
@@ -56,7 +56,8 @@ app.include_router(movimientos.router)
 app.include_router(solicitudes.router)
 app.include_router(supervisiones.router)
 app.include_router(eventos.router)
-app.include_router(facturas.router)
+app.include_router(facturas.router, prefix=API_V1_PREFIX)
+app.include_router(pagos.router, prefix=API_V1_PREFIX)
 
 
 

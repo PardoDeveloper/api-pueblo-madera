@@ -1,4 +1,5 @@
 from sqlmodel import Session, select
+from sqlalchemy.orm import selectinload
 from typing import List, Optional
 from datetime import datetime
 
@@ -6,6 +7,7 @@ from datetime import datetime
 from models.cliente import Cliente
 from models.proyecto import Proyecto
 from models.mueble import Mueble
+from models.pago import Pago
 
 # Importamos el schema de creación (que incluye ClienteCreate y MuebleCreate)
 from schemas.proyecto import ProyectoCreate, ProyectoUpdateEstado, ProyectoUpdateArquitecto, ProyectoRead
@@ -31,11 +33,20 @@ class ProyectoRepository:
         """
         
         try:
-            # 1. CREAR EL CLIENTE
-            cliente_db = Cliente(**proyecto_data.cliente.model_dump())
-            self.db.add(cliente_db)
-            self.db.commit()
-            self.db.refresh(cliente_db)
+            # 1. CREAR O REUTILIZAR EL CLIENTE (buscar por rut)
+            cliente_dict = proyecto_data.cliente.model_dump()
+            existing = None
+            if cliente_dict.get('rut'):
+                statement = select(Cliente).where(Cliente.rut == cliente_dict.get('rut'))
+                existing = self.db.exec(statement).first()
+
+            if existing:
+                cliente_db = existing
+            else:
+                cliente_db = Cliente(**cliente_dict)
+                self.db.add(cliente_db)
+                self.db.commit()
+                self.db.refresh(cliente_db)
             
             # 2. CREAR EL PROYECTO
             proyecto_fields = proyecto_data.model_dump(exclude={"cliente", "muebles_iniciales", "estado"})
@@ -67,7 +78,22 @@ class ProyectoRepository:
             
             self.db.refresh(proyecto_db) 
 
-            return proyecto_db
+            # 4. Registrar pago inicial si se proporcionó en el payload (opcional)
+            try:
+                pago_inicial = getattr(proyecto_data, 'pago_inicial', None)
+                metodo_pago = getattr(proyecto_data, 'metodo_pago', None)
+                banco = getattr(proyecto_data, 'banco', None)
+                if pago_inicial and float(pago_inicial) > 0:
+                    pago = Pago(proyecto_id=proyecto_db.id, tipo='pago_inicial', metodo_pago=metodo_pago, banco=banco, monto=float(pago_inicial))
+                    self.db.add(pago)
+                    self.db.commit()
+                    self.db.refresh(pago)
+            except Exception:
+                # no crítico; si falla el pago, no abortamos la creación del proyecto
+                pass
+
+            # Devuelve el proyecto recargado con relaciones (cliente, muebles, usuarios)
+            return self.get_proyecto_by_id(proyecto_db.id)
 
         except Exception as e:
             # En caso de error, hacemos rollback para asegurar la consistencia de la DB
@@ -79,12 +105,28 @@ class ProyectoRepository:
     # ----------------------------------------------------
     def get_proyecto_by_id(self, proyecto_id: int) -> Optional[Proyecto]:
         """Obtiene un proyecto por su ID."""
-        statement = select(Proyecto).where(Proyecto.id == proyecto_id)
+        # Eager-load relationships so the returned object contains nested attributes
+        statement = (
+            select(Proyecto)
+            .where(Proyecto.id == proyecto_id)
+            .options(
+                selectinload(Proyecto.cliente),
+                selectinload(Proyecto.muebles),
+                selectinload(Proyecto.vendedor),
+                selectinload(Proyecto.jefe_proyecto),
+            )
+        )
         return self.db.exec(statement).first()
 
     def get_proyectos(self, estado: Optional[str] = None) -> List[Proyecto]:
         """Obtiene todos los proyectos, opcionalmente filtrados por estado."""
-        statement = select(Proyecto)
+        # Eager-load relationships for list responses as well
+        statement = select(Proyecto).options(
+            selectinload(Proyecto.cliente),
+            selectinload(Proyecto.muebles),
+            selectinload(Proyecto.vendedor),
+            selectinload(Proyecto.jefe_proyecto),
+        )
         
         if estado:
             statement = statement.where(Proyecto.estado == estado)

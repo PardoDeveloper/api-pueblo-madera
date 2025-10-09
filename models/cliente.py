@@ -22,6 +22,7 @@ class Cliente(SQLModel, table=True):
     
     # Domicilio
     direccion: Optional[str]
+    comuna: Optional[str] = None
     
     # Relación con otros modelos
     proyectos: List["Proyecto"] = Relationship(back_populates="cliente")

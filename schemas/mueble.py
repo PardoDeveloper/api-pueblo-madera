@@ -12,6 +12,9 @@ class MuebleBase(SQLModel):
     # CAMPOS DE COTIZACIÓN ENVIADOS POR EL FRONT-END
     cantidad: int = Field(default=1, gt=0)
     precio_unitario: float = Field(default=0.0, ge=0)
+    # Campos opcionales que puede enviar el frontend
+    categoria: Optional[str] = None
+    incluye_flete: Optional[bool] = False
     
     # CAMPOS DEL FLUJO DE TRABAJO (Con valores por defecto para no ser requeridos)
     estado: str = "Cotización"  # Valor por defecto

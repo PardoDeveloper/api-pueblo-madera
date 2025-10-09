@@ -13,6 +13,12 @@ class Mueble(SQLModel, table=True):
     proyecto_id: int = Field(foreign_key="proyecto.id")
     nombre: str
     descripcion: str
+    # Campos añadidos para compatibilidad con frontend (cantidad y precios)
+    cantidad: int = Field(default=1)
+    precio_unitario: float = Field(default=0.0)
+    # Campos opcionales adicionales que el frontend puede enviar
+    categoria: Optional[str] = None
+    incluye_flete: bool = False
     estado: str  # diseño, armado, lijado, pintado, embalado, entregado
     fecha_inicio: Optional[datetime] = None
     fecha_fin_estimada: Optional[datetime] = None
