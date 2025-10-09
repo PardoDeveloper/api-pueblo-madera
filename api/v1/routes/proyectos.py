@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlmodel import Session
 from typing import List, Optional
 
-# Dependencias internas del proyecto
-from session import get_session # Usando tu módulo 'session'
+# Dependencias internas del proyecto (Ajustadas a tu estructura)
+from session import get_session # Usando tu módulo 'session' para la DB
 from repositories.proyecto_repository import ProyectoRepository
 from schemas.proyecto import (
     ProyectoCreate, ProyectoRead, ProyectoUpdateEstado, 
@@ -11,9 +11,9 @@ from schemas.proyecto import (
 )
 from schemas.mueble import MuebleCreate, MuebleRead
 
-# Importamos la dependencia de seguridad y el modelo de usuario (ajustar la importación según tu estructura)
+# Dependencias de seguridad (Ajustadas a tu estructura)
 from core.security import get_current_user 
-from models.usuario import Usuario # Necesitas importar este modelo
+from models.usuario import Usuario # Modelo de usuario que usas para autenticación
 
 router = APIRouter(
     prefix="/proyectos",
@@ -27,6 +27,7 @@ router = APIRouter(
 def get_vendedor_o_admin(current_user: Usuario = Depends(get_current_user)):
     """Verifica que el usuario actual tenga rol de Vendedor o Administrador."""
     # Asume que el rol se accede como current_user.rol.nombre
+    # Si el rol es una relación, asegúrate de que se cargue
     rol_nombre = current_user.rol.nombre if current_user.rol else None
     
     if rol_nombre not in ["Vendedor", "Administrador"]:
@@ -51,7 +52,12 @@ def get_admin_o_jefe(current_user: Usuario = Depends(get_current_user)):
 # 1. CREACIÓN DE PROYECTO (Venta Inicial/Cotización)
 # ----------------------------------------------------------------------
 
-@router.post("/", response_model=ProyectoRead, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/", 
+    response_model=ProyectoRead, 
+    status_code=status.HTTP_201_CREATED,
+    summary="Crea una nueva cotización (Proyecto) incluyendo Cliente y Muebles iniciales."
+)
 def crear_proyecto(
     proyecto_data: ProyectoCreate, 
     db: Session = Depends(get_session),
@@ -60,7 +66,7 @@ def crear_proyecto(
 ):
     """
     Registra una nueva venta/cotización, creando el Cliente, el Proyecto 
-    y sus Muebles iniciales.
+    y sus Muebles iniciales. El ID del vendedor se extrae del usuario autenticado.
     """
     repo = ProyectoRepository(db)
     
@@ -72,7 +78,7 @@ def crear_proyecto(
         return nuevo_proyecto
     except Exception as e:
         print(f"Error al crear proyecto: {e}")
-        # En producción, usar logging en lugar de print
+        # Retorna un error 400 ya que la validación falló a nivel de DB/lógica de negocio
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Error al procesar la solicitud: {e}"
@@ -82,9 +88,13 @@ def crear_proyecto(
 # 2. LECTURA Y LISTADO DE PROYECTOS
 # ----------------------------------------------------------------------
 
-@router.get("/", response_model=List[ProyectoRead])
+@router.get(
+    "/", 
+    response_model=List[ProyectoRead],
+    summary="Lista todos los proyectos, opcionalmente filtrados por estado."
+)
 def listar_proyectos(
-    estado: Optional[str] = None, 
+    estado: Optional[str] = Query(None, description="Filtrar proyectos por estado (e.g., 'Cotización', 'En Producción')"), 
     db: Session = Depends(get_session),
     current_user: Usuario = Depends(get_current_user) # Todos los usuarios logueados pueden listar
 ):
@@ -93,7 +103,11 @@ def listar_proyectos(
     proyectos = repo.get_proyectos(estado=estado)
     return proyectos
 
-@router.get("/{proyecto_id}", response_model=ProyectoRead)
+@router.get(
+    "/{proyecto_id}", 
+    response_model=ProyectoRead,
+    summary="Obtiene un proyecto por su ID."
+)
 def obtener_proyecto(
     proyecto_id: int, 
     db: Session = Depends(get_session),
@@ -114,7 +128,11 @@ def obtener_proyecto(
 # 3. ACTUALIZACIONES DE FLUJO (Post-Venta y Producción)
 # ----------------------------------------------------------------------
 
-@router.put("/{proyecto_id}/estado", response_model=ProyectoRead)
+@router.put(
+    "/{proyecto_id}/estado", 
+    response_model=ProyectoRead,
+    summary="Actualiza el estado principal del proyecto."
+)
 def actualizar_estado_proyecto(
     proyecto_id: int, 
     estado_data: ProyectoUpdateEstado,
@@ -131,7 +149,11 @@ def actualizar_estado_proyecto(
         
     return proyecto_actualizado
 
-@router.post("/{proyecto_id}/mueble", response_model=MuebleRead)
+@router.post(
+    "/{proyecto_id}/mueble", 
+    response_model=MuebleRead,
+    summary="Añade un mueble nuevo a un proyecto ya existente."
+)
 def agregar_mueble_adicional(
     proyecto_id: int, 
     mueble_data: MuebleCreate,
@@ -148,7 +170,11 @@ def agregar_mueble_adicional(
 
     return mueble_nuevo
 
-@router.put("/{proyecto_id}/arquitecto", response_model=ProyectoRead)
+@router.put(
+    "/{proyecto_id}/arquitecto", 
+    response_model=ProyectoRead,
+    summary="Asigna el jefe de proyecto (arquitecto) responsable."
+)
 def asignar_arquitecto_proyecto(
     proyecto_id: int, 
     arquitecto_data: ProyectoUpdateArquitecto,
