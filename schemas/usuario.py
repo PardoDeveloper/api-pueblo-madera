@@ -53,6 +53,14 @@ class UsuarioRead(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class UsuarioReadBasic(BaseModel):
+    id: int
+    nombre: Optional[str] = None
+    email: Optional[str] = None
+
+    
+    model_config = ConfigDict(from_attributes=True)
+
 
 class UsuarioUpdate(BaseModel):
     email: Optional[str] = None

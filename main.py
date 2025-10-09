@@ -9,7 +9,8 @@ from core.loggin import logger
 import models
 from sqlmodel import SQLModel
 from session import engine
-
+from create_test_user import create_vendedor_user
+from create_arquitect import create_a_user
 @asynccontextmanager
 async def lifespan_manager(app: FastAPI):
     """
@@ -18,6 +19,8 @@ async def lifespan_manager(app: FastAPI):
     logger.info("INICIANDO SERVIDOR...")
     SQLModel.metadata.create_all(engine)
     create_admin()
+    create_vendedor_user()
+    create_a_user()
     yield
     logger.info("APAGANDO SERVIDOR...")
 
@@ -38,10 +41,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+API_V1_PREFIX = "/api/v1" 
 
 app.include_router(auth.router)
 app.include_router(clientes.router)
-app.include_router(proyectos.router)
+app.include_router(proyectos.router, prefix=API_V1_PREFIX)
 app.include_router(muebles.router)
 app.include_router(planos.router)
 app.include_router(tareas.router)

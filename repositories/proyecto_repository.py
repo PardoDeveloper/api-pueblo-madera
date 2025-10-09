@@ -2,17 +2,19 @@ from sqlmodel import Session, select
 from typing import List, Optional
 from datetime import datetime
 
-# Importamos los modelos y esquemas
+# Importamos los modelos de la base de datos
 from models.cliente import Cliente
 from models.proyecto import Proyecto
 from models.mueble import Mueble
-from schemas.proyecto import ProyectoCreate, ProyectoUpdateEstado, ProyectoUpdateArquitecto
+
+# Importamos el schema de creación (que incluye ClienteCreate y MuebleCreate)
+from schemas.proyecto import ProyectoCreate, ProyectoUpdateEstado, ProyectoUpdateArquitecto, ProyectoRead
 from schemas.mueble import MuebleCreate
 
 class ProyectoRepository:
     """
     Clase que encapsula la lógica de acceso a datos para Proyectos, Clientes y Muebles.
-    Actúa como la única interfaz entre las rutas de FastAPI y la base de datos.
+    Maneja la lógica de negocio para la creación de cotizaciones anidadas.
     """
 
     def __init__(self, db: Session):
@@ -27,47 +29,56 @@ class ProyectoRepository:
         Crea un nuevo Cliente, un nuevo Proyecto, y sus Muebles iniciales,
         asegurando que se relacionen correctamente en una única transacción.
         """
-        # 1. Crear el modelo Cliente
-        cliente_db = Cliente.model_validate(proyecto_data.cliente)
-        self.db.add(cliente_db)
-        self.db.commit()
-        self.db.refresh(cliente_db)
         
-        # 2. Crear el modelo Proyecto
-        # Usamos los campos de ProyectoBase y asignamos IDs
-        proyecto_db = Proyecto(
-            nombre_proyecto=proyecto_data.nombre_proyecto,
-            fecha_entrega_estimada=proyecto_data.fecha_entrega_estimada,
-            cliente_id=cliente_db.id,
-            vendedor_id=vendedor_id, # ID del usuario autenticado que realiza la venta
-            estado="Cotización" # Estado inicial por defecto
-        )
-        self.db.add(proyecto_db)
-        self.db.commit()
-        self.db.refresh(proyecto_db)
+        try:
+            # 1. CREAR EL CLIENTE
+            cliente_db = Cliente(**proyecto_data.cliente.model_dump())
+            self.db.add(cliente_db)
+            self.db.commit()
+            self.db.refresh(cliente_db)
+            
+            # 2. CREAR EL PROYECTO
+            proyecto_fields = proyecto_data.model_dump(exclude={"cliente", "muebles_iniciales", "estado"})
+            
+            proyecto_db = Proyecto(
+                **proyecto_fields,
+                cliente_id=cliente_db.id,       # Asignamos el ID del cliente recién creado
+                vendedor_id=vendedor_id,        # ID del usuario autenticado que realiza la venta
+                estado="Cotización",            # Forzamos el estado inicial
+            )
+            self.db.add(proyecto_db)
+            self.db.commit()
+            self.db.refresh(proyecto_db)
 
-        # 3. Crear los modelos Mueble y relacionarlos al Proyecto
-        muebles_db = []
-        for mueble_schema in proyecto_data.muebles_iniciales:
-            # Creamos el Mueble y le asignamos el proyecto_id
-            mueble_db = Mueble.model_validate(mueble_schema, update={'proyecto_id': proyecto_db.id})
-            muebles_db.append(mueble_db)
-        
-        self.db.add_all(muebles_db)
-        self.db.commit()
-        
-        # Hacemos refresh del proyecto para asegurar que las relaciones estén cargadas
-        self.db.refresh(proyecto_db) 
+            # 3. CREAR LOS MUEBLES INICIALES
+            muebles_db = []
+            for mueble_schema in proyecto_data.muebles_iniciales:
+                mueble_fields = mueble_schema.model_dump()
+                
+                mueble_db = Mueble(
+                    **mueble_fields, 
+                    proyecto_id=proyecto_db.id,
+                )
+                
+                muebles_db.append(mueble_db)
+            
+            self.db.add_all(muebles_db)
+            self.db.commit()
+            
+            self.db.refresh(proyecto_db) 
 
-        # Retornamos el proyecto creado
-        return proyecto_db
+            return proyecto_db
+
+        except Exception as e:
+            # En caso de error, hacemos rollback para asegurar la consistencia de la DB
+            self.db.rollback()
+            raise e
 
     # ----------------------------------------------------
     # 2. LECTURA (Consultas)
     # ----------------------------------------------------
     def get_proyecto_by_id(self, proyecto_id: int) -> Optional[Proyecto]:
         """Obtiene un proyecto por su ID."""
-        # Se obtienen todas las relaciones (cliente, muebles, etc.) gracias a SQLModel
         statement = select(Proyecto).where(Proyecto.id == proyecto_id)
         return self.db.exec(statement).first()
 
@@ -78,8 +89,8 @@ class ProyectoRepository:
         if estado:
             statement = statement.where(Proyecto.estado == estado)
             
-        # Ordenamos por fecha de creación descendente para mostrar los más nuevos primero
-        statement = statement.order_by(Proyecto.fecha_creacion.desc())
+        # Ordenamos por ID descendente (asumiendo que ID es auto-incremental y refleja la creación)
+        statement = statement.order_by(Proyecto.id.desc())
         
         return self.db.exec(statement).all()
 
@@ -94,9 +105,10 @@ class ProyectoRepository:
             
         proyecto.estado = estado_data.estado
         
-        # Si se cierra el proyecto, registramos la fecha de cierre real
-        if estado_data.estado == "Cerrado":
-            proyecto.fecha_cierre_real = datetime.utcnow()
+        # Si el proyecto se marca como finalizado o cerrado, registra la fecha de fin real
+        if estado_data.estado in ["Finalizado", "Cerrado"]:
+            # Usamos fecha_fin_real del modelo Proyecto
+            proyecto.fecha_fin_real = datetime.utcnow()
             
         self.db.add(proyecto)
         self.db.commit()
@@ -105,29 +117,30 @@ class ProyectoRepository:
         
     def add_mueble_to_proyecto(self, proyecto_id: int, mueble_data: MuebleCreate) -> Optional[Mueble]:
         """Añade un mueble adicional a un proyecto existente (ej: post-cotización)."""
-        # Verificamos si el proyecto existe (get_proyecto_by_id ya lo hace, pero aquí lo necesitamos para el check)
+        # Verificamos si el proyecto existe
         proyecto = self.db.get(Proyecto, proyecto_id) 
         if not proyecto:
             return None
         
         # Creamos y asignamos el ID del proyecto al nuevo mueble
-        mueble_db = Mueble.model_validate(mueble_data, update={'proyecto_id': proyecto_id})
+        mueble_db = Mueble(**mueble_data.model_dump(), proyecto_id=proyecto_id)
+        
         self.db.add(mueble_db)
         self.db.commit()
         self.db.refresh(mueble_db)
         return mueble_db
 
     def assign_arquitecto(self, proyecto_id: int, arquitecto_data: ProyectoUpdateArquitecto) -> Optional[Proyecto]:
-        """Asigna un arquitecto al proyecto, lo cual es el siguiente paso en el flujo."""
+        """Asigna un jefe de proyecto (arquitecto) al proyecto."""
         proyecto = self.get_proyecto_by_id(proyecto_id)
         if not proyecto:
             return None
 
-        proyecto.arquitecto_id = arquitecto_data.arquitecto_id
+        # Nota: Asumo que el campo en el modelo Proyecto es 'jefe_proyecto_id' o 'arquitecto_id'
+        # Usaré 'jefe_proyecto_id' que es el que definimos en ProyectoCreate
+        proyecto.jefe_proyecto_id = arquitecto_data.arquitecto_id
+        
         self.db.add(proyecto)
         self.db.commit()
         self.db.refresh(proyecto)
         return proyecto
-
-    # Nota: Las funciones para actualizar Muebles individuales (ej: estado_proceso de un mueble)
-    # se pueden añadir aquí o en un futuro MuebleRepository.
