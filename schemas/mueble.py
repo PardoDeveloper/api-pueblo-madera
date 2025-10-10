@@ -3,6 +3,10 @@ from sqlmodel import SQLModel, Field
 from typing import Optional
 from datetime import datetime
 from pydantic import ConfigDict
+from typing import List
+
+# Import schema de Plano para incluirlo en MuebleRead
+from schemas.plano import PlanoRead
 
 # --- 1. MuebleBase (Base para todos los esquemas, incluye campos de cotización) ---
 class MuebleBase(SQLModel):
@@ -46,5 +50,6 @@ class MuebleUpdate(SQLModel):
 class MuebleRead(MuebleBase):
     id: int
     proyecto_id: int  # Aquí se incluye la clave foránea
+    planos: Optional[List[PlanoRead]] = None
 
     model_config = ConfigDict(from_attributes=True)

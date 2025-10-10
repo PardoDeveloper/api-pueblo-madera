@@ -7,6 +7,7 @@ from datetime import datetime
 from models.cliente import Cliente
 from models.proyecto import Proyecto
 from models.mueble import Mueble
+from models.plano import Plano
 from models.pago import Pago
 
 # Importamos el schema de creación (que incluye ClienteCreate y MuebleCreate)
@@ -111,7 +112,7 @@ class ProyectoRepository:
             .where(Proyecto.id == proyecto_id)
             .options(
                 selectinload(Proyecto.cliente),
-                selectinload(Proyecto.muebles),
+                selectinload(Proyecto.muebles).selectinload(Mueble.planos),
                 selectinload(Proyecto.vendedor),
                 selectinload(Proyecto.jefe_proyecto),
             )
@@ -123,7 +124,7 @@ class ProyectoRepository:
         # Eager-load relationships for list responses as well
         statement = select(Proyecto).options(
             selectinload(Proyecto.cliente),
-            selectinload(Proyecto.muebles),
+            selectinload(Proyecto.muebles).selectinload(Mueble.planos),
             selectinload(Proyecto.vendedor),
             selectinload(Proyecto.jefe_proyecto),
         )
