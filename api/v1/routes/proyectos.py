@@ -41,7 +41,7 @@ def get_admin_o_jefe(current_user: Usuario = Depends(get_current_user)):
     """Verifica que el usuario actual tenga rol de Administrador o Jefe de Proyecto."""
     rol_nombre = current_user.rol.nombre if current_user.rol else None
     
-    if rol_nombre not in ["Jefe de Proyecto", "Administrador"]:
+    if rol_nombre not in ["Jefe de Proyecto", "Administrador","vendedor","administrador","arquitecto","Arquitecto"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permiso para realizar esta acción. Requerido: Jefe de Proyecto o Administrador."
